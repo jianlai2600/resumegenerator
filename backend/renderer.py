@@ -1,107 +1,131 @@
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Image, Table, TableStyle, Frame
 
-def generate_resume(filename):
-    # Define the PDF document
-    doc = SimpleDocTemplate(filename, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+# Sample data dictionary
+resume_data = {
+    "name": "Jack Sparrow",
+    "title": "Captain",
+    "contact_info": {
+        "email": "jack@sparrow.org",
+        "twitter": "@sparrow",
+        "phone": "0099/333 5647380",
+        "location": "Tortuga"
+    },
+    "about_me": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus.",
+    "personal": {
+        "nationality": "English",
+        "born": "1690"
+    },
+    "specializations": ["Privateering", "Buccaneering", "Parler", "Rum"],
+    "interests": ["R / Android / Linux"],
+    "experience": [
+        {"role": "Captain of the Black Pearl", "lead": "East Indies", "years": "2018–2021", "details": "Finally got the ship back."},
+        {"role": "Captain of the Black Pearl", "lead": "Tortuga", "years": "2016–2017", "details": "Lost the ship, found treasure."}
+    ],
+    "education": [
+        {"degree": "Captain", "institution": "Tortuga Uni", "year": "1710"},
+        {"degree": "Buccaneering", "institution": "M.A. London", "year": "1715"},
+        {"degree": "Buccaneering", "institution": "B.A. London", "year": "1720"}
+    ],
+    "programming_skills": {
+        "html_css": 80,
+        "latex": 70,
+        "python": 90,
+        "r": 60,
+        "javascript": 50
+    },
+    "languages": {
+        "English": "C2",
+        "French": "C2",
+        "Spanish": "C2",
+        "Italian": "C2"
+    },
+    "certificates": [
+        {"title": "Captain's Certificate", "year": "1708"},
+        {"title": "Travel Grant", "year": "1710"}
+    ],
+    "talks": [
+        {"title": "How I lost my ship", "event": "Annual Pirate's Conference", "year": "Nov. 1726"}
+    ]
+}
+
+def create_resume_pdf(filename, data):
+    doc = SimpleDocTemplate(filename, pagesize=A4)
+    elements = []
     styles = getSampleStyleSheet()
-    flowables = []
+    styles.add(ParagraphStyle(name="ResumeTitle", fontSize=26, leading=30, fontName="Helvetica-Bold", textColor=colors.black, spaceAfter=10))
+    styles.add(ParagraphStyle(name="Subtitle", fontSize=16, leading=18, textColor=colors.black, spaceAfter=12))
+    styles.add(ParagraphStyle(name="SectionHeading", fontSize=14, leading=18, textColor=colors.black, spaceAfter=10))
+    styles.add(ParagraphStyle(name="NormalText", fontSize=10, leading=12, textColor=colors.black, spaceAfter=6))
 
-    # Title / Name
-    title_style = ParagraphStyle(
-        'title_style',
-        parent=styles['Heading1'],
-        fontSize=24,
-        leading=28,
-        spaceAfter=10,
-        alignment=1,
-    )
-    flowables.append(Paragraph("Your Name", title_style))
+    # Header
+    elements.append(Paragraph(data['name'], styles['ResumeTitle']))
+    elements.append(Paragraph(data['title'], styles['Subtitle']))
 
     # Contact Information
-    contact_info = "Email: your.email@example.com | Phone: (123) 456-7890 | LinkedIn: linkedin.com/in/yourprofile"
-    flowables.append(Paragraph(contact_info, styles['Normal']))
-    flowables.append(Spacer(1, 20))
+    contact_info = f"{data['contact_info']['email']} | {data['contact_info']['twitter']} | {data['contact_info']['phone']} | {data['contact_info']['location']}"
+    elements.append(Paragraph(contact_info, styles['NormalText']))
 
-    # Section Style
-    section_style = ParagraphStyle(
-        'section_style',
-        parent=styles['Heading2'],
-        fontSize=14,
-        leading=16,
-        spaceAfter=6,
-        textColor=colors.black
-    )
+    # About Me
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("About Me", styles['SectionHeading']))
+    elements.append(Paragraph(data['about_me'], styles['NormalText']))
 
-    # Subsection (Job/Education) Style
-    subsection_style = ParagraphStyle(
-        'subsection_style',
-        parent=styles['Heading3'],
-        fontSize=12,
-        leading=14,
-        spaceAfter=4
-    )
+    # Personal Details
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("Personal", styles['SectionHeading']))
+    elements.append(Paragraph(f"Nationality: {data['personal']['nationality']}", styles['NormalText']))
+    elements.append(Paragraph(f"Born: {data['personal']['born']}", styles['NormalText']))
 
-    # Body Text Style
-    body_style = ParagraphStyle(
-        'body_style',
-        parent=styles['BodyText'],
-        fontSize=10,
-        leading=12,
-        spaceAfter=6
-    )
+    # Areas of Specialization
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("Areas of Specialization", styles['SectionHeading']))
+    for specialization in data['specializations']:
+        elements.append(Paragraph(f"- {specialization}", styles['NormalText']))
 
-    # Experience Section
-    flowables.append(Paragraph("Experience", section_style))
+    # Experience
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("Experience", styles['SectionHeading']))
+    for exp in data['experience']:
+        elements.append(Paragraph(f"{exp['years']} - {exp['role']} at {exp['lead']}", styles['NormalText']))
+        elements.append(Paragraph(exp['details'], styles['NormalText']))
 
-    experiences = [
-        {"title": "Job Title 1", "company": "Company 1", "dates": "Month YYYY - Month YYYY", "details": ["Responsibility 1", "Responsibility 2"]},
-        {"title": "Job Title 2", "company": "Company 2", "dates": "Month YYYY - Present", "details": ["Responsibility 1", "Responsibility 2"]}
-    ]
+    # Education
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("Education", styles['SectionHeading']))
+    for edu in data['education']:
+        elements.append(Paragraph(f"{edu['year']} - {edu['degree']} at {edu['institution']}", styles['NormalText']))
 
-    for exp in experiences:
-        flowables.append(Paragraph(f"{exp['title']} at {exp['company']} — {exp['dates']}", subsection_style))
-        for detail in exp["details"]:
-            flowables.append(Paragraph(f"• {detail}", body_style))
-        flowables.append(Spacer(1, 8))
+    # Programming Skills with Progress Bars
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("Programming Skills", styles['SectionHeading']))
+    for skill, level in data['programming_skills'].items():
+        elements.append(Paragraph(f"{skill}: {'█' * (level // 10)} {level}%", styles['NormalText']))
 
-    # Education Section
-    flowables.append(Paragraph("Education", section_style))
+    # Languages
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("Languages", styles['SectionHeading']))
+    for lang, proficiency in data['languages'].items():
+        elements.append(Paragraph(f"{lang}: {proficiency}", styles['NormalText']))
 
-    education = [
-        {"degree": "Bachelor of Science in Major", "school": "University Name", "dates": "Month YYYY - Month YYYY"},
-        {"degree": "Master of Science in Major", "school": "University Name", "dates": "Month YYYY - Month YYYY"}
-    ]
+    # Certificates & Grants
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("Certificates & Grants", styles['SectionHeading']))
+    for cert in data['certificates']:
+        elements.append(Paragraph(f"{cert['year']} - {cert['title']}", styles['NormalText']))
 
-    for edu in education:
-        flowables.append(Paragraph(f"{edu['degree']} from {edu['school']} — {edu['dates']}", subsection_style))
-        flowables.append(Spacer(1, 8))
+    # Talks
+    elements.append(Spacer(1, 0.2 * inch))
+    elements.append(Paragraph("Talks", styles['SectionHeading']))
+    for talk in data['talks']:
+        elements.append(Paragraph(f"{talk['year']} - {talk['title']} at {talk['event']}", styles['NormalText']))
 
-    # Skills Section
-    flowables.append(Paragraph("Skills", section_style))
+    # Build PDF
+    doc.build(elements)
 
-    skills = [
-        ["Programming Languages", "Python, Java, C++"],
-        ["Frameworks", "Django, Flask, React"],
-        ["Tools", "Git, Docker, Kubernetes"]
-    ]
-
-    skill_table = Table(skills, colWidths=[120, 300])
-    skill_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)
-    ]))
-    flowables.append(skill_table)
-
-    # Generate PDF
-    doc.build(flowables)
-
-if __name__ == "__main__":
-    generate_resume("resume.pdf")
+# Generate the PDF
+create_resume_pdf("resume_output.pdf", resume_data)
