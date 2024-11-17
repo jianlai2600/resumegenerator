@@ -1,159 +1,219 @@
+// App.js
 import React, { useState } from 'react';
-import { Container, Button, Form, ProgressBar } from 'react-bootstrap';
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
+import './App.css';
 
-function App() {
-    const [step, setStep] = useState(1);  // Current step
-    const [name, setName] = useState('');
-    const [contact, setContact] = useState('');
-    const [education, setEducation] = useState('');
-    const [experiences, setExperiences] = useState([]);
-    const [skills, setSkills] = useState([]);
-    const [experienceInput, setExperienceInput] = useState('');
-    const [skillInput, setSkillInput] = useState('');
-    const [resumeGenerated, setResumeGenerated] = useState(false);
+// 基本信息表单
+const BasicInfoForm = ({ onNext, formData, setFormData }) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext();
+  };
 
-    // Handle next button click
-    const handleNext = () => {
-        if (step === 5) {
-            setResumeGenerated(true);  // Generate resume on the last step
-        } else {
-            setStep(step + 1);
-        }
-    };
-
-    // Handle back button click
-    const handleBack = () => {
-        setStep(step - 1);
-    };
-
-    // Handle return to homepage
-    const handleReturnToHome = () => {
-        setStep(1);
-        setResumeGenerated(false);
-        setName('');
-        setContact('');
-        setEducation('');
-        setExperiences([]);
-        setSkills([]);
-    };
-
-    const addExperience = () => {
-        setExperiences([...experiences, experienceInput]);
-        setExperienceInput('');
-    };
-
-    const addSkill = () => {
-        setSkills([...skills, skillInput]);
-        setSkillInput('');
-    };
-
-    const renderFormContent = () => {
-        switch (step) {
-            case 1:
-                return (
-                    <>
-                        <h4>Welcome! Please tell us your name</h4>
-                        <Form.Control
-                            type="text"
-                            placeholder="Enter your name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                    </>
-                );
-            case 2:
-                return (
-                    <>
-                        <h4>Please provide your contact information</h4>
-                        <Form.Control
-                            type="text"
-                            placeholder="Enter your contact information"
-                            value={contact}
-                            onChange={(e) => setContact(e.target.value)}
-                        />
-                    </>
-                );
-            case 3:
-                return (
-                    <>
-                        <h4>Please enter your educational background</h4>
-                        <Form.Control
-                            type="text"
-                            placeholder="Enter your educational background"
-                            value={education}
-                            onChange={(e) => setEducation(e.target.value)}
-                        />
-                    </>
-                );
-            case 4:
-                return (
-                    <>
-                        <h4>Please add your work experiences</h4>
-                        <Form.Control
-                            type="text"
-                            placeholder="Enter work experience"
-                            value={experienceInput}
-                            onChange={(e) => setExperienceInput(e.target.value)}
-                        />
-                        <Button variant="primary" onClick={addExperience}>Add Experience</Button>
-                        <ul>
-                            {experiences.map((exp, idx) => <li key={idx}>{exp}</li>)}
-                        </ul>
-                    </>
-                );
-            case 5:
-                return (
-                    <>
-                        <h4>Please add your skills</h4>
-                        <Form.Control
-                            type="text"
-                            placeholder="Enter skill"
-                            value={skillInput}
-                            onChange={(e) => setSkillInput(e.target.value)}
-                        />
-                        <Button variant="primary" onClick={addSkill}>Add Skill</Button>
-                        <ul>
-                            {skills.map((skill, idx) => <li key={idx}>{skill}</li>)}
-                        </ul>
-                    </>
-                );
-            default:
-                return null;
-        }
-    };
-
-    const renderResume = () => (
-    <div className="resume-preview">
-        <h3>Your Resume</h3>
-        <iframe
-            src="http://127.0.0.1:5000/generate_resume"
-            width="100%"
-            height="500px"
-            title="Resume PDF"
-        ></iframe>
-        <Button variant="primary" href="http://127.0.0.1:5000/generate_resume" download className="mt-3">
-            Download Resume
-        </Button>
+  return (
+    <div className="form-container">
+      <h2>基本信息</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>姓名：</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>年龄：</label>
+          <input
+            type="number"
+            value={formData.age}
+            onChange={(e) => setFormData({...formData, age: e.target.value})}
+            required
+          />
+        </div>
+        <button type="submit">下一步</button>
+      </form>
     </div>
-    );
+  );
+};
 
-    return (
-        <Container className="mt-5">
-            <h2 className="text-center mb-4">Resume Generator</h2>
-            <ProgressBar now={(step / 5) * 100} label={`Step ${step} / 5`} className="mb-4" />
-            {resumeGenerated ? (
-                renderResume()
-            ) : (
-                <Form>
-                    {renderFormContent()}
-                    <div className="d-flex justify-content-between mt-4">
-                        {step > 1 && <Button variant="secondary" onClick={handleBack}>Back</Button>}
-                        <Button variant="primary" onClick={handleNext}>{step === 5 ? 'Generate Resume' : 'Next'}</Button>
-                    </div>
-                </Form>
-            )}
-        </Container>
-    );
-}
+// 教育背景表单
+const EducationForm = ({ onNext, onBack, formData, setFormData }) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext();
+  };
+
+  return (
+    <div className="form-container">
+      <h2>教育背景</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>最高学历：</label>
+          <select
+            value={formData.education}
+            onChange={(e) => setFormData({...formData, education: e.target.value})}
+            required
+          >
+            <option value="">请选择</option>
+            <option value="高中">高中</option>
+            <option value="本科">本科</option>
+            <option value="硕士">硕士</option>
+            <option value="博士">博士</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>专业：</label>
+          <input
+            type="text"
+            value={formData.major}
+            onChange={(e) => setFormData({...formData, major: e.target.value})}
+            required
+          />
+        </div>
+        <div className="button-group">
+          <button type="button" onClick={onBack}>上一步</button>
+          <button type="submit">下一步</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// 工作经历表单
+const WorkExperienceForm = ({ onNext, onBack, formData, setFormData }) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext();
+  };
+
+  return (
+    <div className="form-container">
+      <h2>工作经历</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>当前职位：</label>
+          <input
+            type="text"
+            value={formData.currentPosition}
+            onChange={(e) => setFormData({...formData, currentPosition: e.target.value})}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>工作年限：</label>
+          <input
+            type="number"
+            value={formData.yearsOfExperience}
+            onChange={(e) => setFormData({...formData, yearsOfExperience: e.target.value})}
+            required
+          />
+        </div>
+        <div className="button-group">
+          <button type="button" onClick={onBack}>上一步</button>
+          <button type="submit">完成</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// 在 App.js 中添加提交函数
+const Results = ({ formData }) => {
+  const [submitStatus, setSubmitStatus] = useState('');
+
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus('提交成功！');
+      } else {
+        setSubmitStatus(`提交失败: ${data.message}`);
+      }
+    } catch (error) {
+      setSubmitStatus(`提交失败: ${error.message}`);
+    }
+  };
+
+  return (
+    <div className="results-container">
+      <h2>收集的信息</h2>
+      <pre>{JSON.stringify(formData, null, 2)}</pre>
+      <button onClick={handleSubmit}>提交问卷</button>
+      {submitStatus && <p className={submitStatus.includes('成功') ? 'success' : 'error'}>{submitStatus}</p>}
+    </div>
+  );
+};
+
+// 主应用组件
+const App = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    age: '',
+    education: '',
+    major: '',
+    currentPosition: '',
+    yearsOfExperience: '',
+  });
+
+  const [step, setStep] = useState(1);
+
+  const nextStep = () => setStep(step + 1);
+  const prevStep = () => setStep(step - 1);
+
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <BasicInfoForm
+            onNext={nextStep}
+            formData={formData}
+            setFormData={setFormData}
+          />
+        );
+      case 2:
+        return (
+          <EducationForm
+            onNext={nextStep}
+            onBack={prevStep}
+            formData={formData}
+            setFormData={setFormData}
+          />
+        );
+      case 3:
+        return (
+          <WorkExperienceForm
+            onNext={nextStep}
+            onBack={prevStep}
+            formData={formData}
+            setFormData={setFormData}
+          />
+        );
+      case 4:
+        return <Results formData={formData} />;
+      default:
+        return <Navigate to="/" />;
+    }
+  };
+
+  return (
+    <div className="app">
+      <div className="progress-bar">
+        <div className="progress" style={{ width: `${(step / 4) * 100}%` }}></div>
+      </div>
+      {renderStep()}
+    </div>
+  );
+};
 
 export default App;
